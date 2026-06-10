@@ -27,9 +27,9 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dependencies = [
-    "mkdocs>=1.5.2",
-]
+# dependencies = [
+#     "mkdocs>=1.5.2",
+# ]
 
 [project.entry-points."mkdocs.plugins"]
 i18n = "mkdocs_static_i18n.plugin:I18n"
@@ -53,8 +53,8 @@ include = [
 [tool.hatch.build.targets.wheel]
 exclude = ["/tests"]
 
-[project.optional-dependencies]
-material = ["mkdocs-material<9.7.2"]
+# [project.optional-dependencies]
+# material = ["mkdocs-material<9.7.2"]
 
 [tool.hatch.envs.default.scripts]
 all = [
@@ -65,7 +65,7 @@ all = [
 [tool.hatch.envs.test]
 dependencies = [
     "pytest",
-    "mkdocs-material<9.7.2"
+    # "mkdocs-material<9.7.2"
 ]
 
 [tool.hatch.envs.test.scripts]
@@ -79,7 +79,7 @@ type = ["default"]
 
 [tool.hatch.envs.doc]
 dependencies = [
-    "mkdocs-material<9.7.2"
+    # "mkdocs-material<9.7.2"
 ]
 
 [tool.hatch.envs.doc.scripts]
@@ -116,4 +116,4 @@ line_length = 100
 
 [tool.ruff]
 line-length = 100
-ignore = ["E501"]
+lint.ignore = ["E501"]

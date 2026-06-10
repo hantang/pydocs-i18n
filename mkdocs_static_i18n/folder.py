@@ -2,9 +2,9 @@ import os
 from pathlib import Path, PurePath
 from typing import Optional
 
-from mkdocs.config.defaults import MkDocsConfig
-from mkdocs.plugins import get_plugin_logger
-from mkdocs.structure.files import File, Files
+from mkdocs_static_i18n.compat import MkDocsConfig
+from mkdocs_static_i18n.compat import get_plugin_logger
+from mkdocs_static_i18n.compat import File, Files
 
 from mkdocs_static_i18n import is_relative_to
 from mkdocs_static_i18n.config import RE_LOCALE

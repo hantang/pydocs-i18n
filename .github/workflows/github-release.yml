@@ -1,0 +1,39 @@
+name: github-release
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - name: Install Hatch
+        run: |
+          python -m pip install -U hatch
+      - name: Build package
+        run: |
+          hatch build
+      # - name: Publish
+      #   run: |
+      #     hatch publish
+      #   env:
+      #     HATCH_INDEX_USER: __token__
+      #     HATCH_INDEX_AUTH: ${{ secrets.PYPI_PASSWORD }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v3
+        # if: github.ref_type == 'tag'
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          # !dist/.gitignore
+          files: |
+            dist/*.whl
+            dist/*.tar.gz

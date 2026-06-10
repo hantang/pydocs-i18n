@@ -3,8 +3,8 @@
 import logging
 from typing import Dict, Optional, TypeVar
 
-from mkdocs.config.defaults import MkDocsConfig
-from mkdocs.plugins import BasePlugin
+from mkdocs_static_i18n.compat import MkDocsConfig
+from mkdocs_static_i18n.compat import BasePlugin
 
 Plugin = TypeVar("Plugin", bound=BasePlugin)
 """Plugin Instance Type"""

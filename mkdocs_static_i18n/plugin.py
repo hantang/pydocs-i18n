@@ -5,17 +5,19 @@ from pathlib import PurePath
 from typing import Optional
 
 from jinja2.ext import loopcontrols
-from mkdocs import plugins
-from mkdocs.commands.build import build
-from mkdocs.config.defaults import MkDocsConfig
-from mkdocs.plugins import get_plugin_logger
-from mkdocs.structure.files import Files
-from mkdocs.structure.pages import Page
+from mkdocs_static_i18n.compat import plugins
+from mkdocs_static_i18n.compat import build
+from mkdocs_static_i18n.compat import MkDocsConfig
+from mkdocs_static_i18n.compat import get_plugin_logger
+from mkdocs_static_i18n.compat import Files
+from mkdocs_static_i18n.compat import Page
+from mkdocs_static_i18n.compat import BUILD_LOGGER_NAME, THEME_NAME
 
 from mkdocs_static_i18n import folder
 from mkdocs_static_i18n.reconfigure import ExtendedPlugin
 from mkdocs_static_i18n.utils import I18nLoggingFilter
 
+BLOG_KEY = f"{THEME_NAME}/blog"
 log = get_plugin_logger(__name__)
 
 
@@ -88,7 +90,7 @@ class I18n(ExtendedPlugin):
             nav = folder.reconfigure_navigation(self, nav)
 
         # reconfigure mkdocs-material blog navigation
-        if self.config.reconfigure_material and "material/blog" in config.plugins:
+        if self.config.reconfigure_material and BLOG_KEY in config.plugins:
             nav = self.reconfigure_material_blog(nav, config, files)
 
         homepage_suffix: str = "" if config.use_directory_urls else "index.html"
@@ -238,7 +240,7 @@ class I18n(ExtendedPlugin):
         self.building = True
 
         # Block time logging for internal builds and filter redundant MkDocs log
-        build_logger = logging.getLogger("mkdocs.commands.build")
+        build_logger = logging.getLogger(BUILD_LOGGER_NAME)
         i18n_filter = I18nLoggingFilter()
         i18n_filter.filtered_prefixes.add("Documentation built in")
         i18n_filter.filtered_prefixes.add("Building documentation to directory")
@@ -252,7 +254,7 @@ class I18n(ExtendedPlugin):
 
         # monkey patching mkdocs.utils.clean_directory to avoid
         # the site_dir to be cleaned up on each build() call
-        from mkdocs import utils
+        from mkdocs_static_i18n.compat import utils
 
         mkdocs_utils_clean_directory = utils.clean_directory
         utils.clean_directory = lambda x: x

@@ -3,80 +3,25 @@ from copy import deepcopy
 from pathlib import Path, PurePath
 from typing import Union
 from urllib.parse import urlsplit
+from packaging.version import Version
 
-from mkdocs import localization
-from mkdocs.config.base import LegacyConfig
-from mkdocs.config.defaults import MkDocsConfig
-from mkdocs.plugins import BasePlugin, get_plugin_logger
-from mkdocs.structure.files import File, Files
-from mkdocs.structure.nav import Navigation
-from mkdocs.structure.pages import Page
-from mkdocs.theme import Theme
+from mkdocs_static_i18n.compat import localization
+from mkdocs_static_i18n.compat import LegacyConfig
+from mkdocs_static_i18n.compat import MkDocsConfig
+from mkdocs_static_i18n.compat import BasePlugin, get_plugin_logger
+from mkdocs_static_i18n.compat import File, Files
+from mkdocs_static_i18n.compat import Navigation
+from mkdocs_static_i18n.compat import Page
+from mkdocs_static_i18n.compat import Theme
+from mkdocs_static_i18n.compat import LUNR_LANGUAGES, MATERIAL_VERSION, THEME_NAME
 
 from mkdocs_static_i18n import __file__ as installation_path
 from mkdocs_static_i18n import folder, is_relative_to, suffix
 from mkdocs_static_i18n.config import I18nPluginConfig
 
 log = get_plugin_logger(__name__)
-
-try:
-    from importlib.metadata import version
-
-    MATERIAL_VERSION = version("mkdocs-material")
-except Exception:
-    try:
-        # python 3.7 compatibility, drop on 3.7 EOL
-        import pkg_resources
-
-        MATERIAL_VERSION = pkg_resources.get_distribution("mkdocs-material").version
-    except Exception:
-        MATERIAL_VERSION = None
-
-try:
-    from importlib.metadata import files as package_files
-
-    LUNR_LANGUAGES = [
-        PurePath(lang.stem).suffix.replace(".", "")
-        for lang in package_files("mkdocs")
-        if "mkdocs/contrib/search/lunr-language/lunr." in lang.as_posix() and len(lang.stem) == 7
-    ]
-    assert len(LUNR_LANGUAGES) > 1
-    LUNR_LANGUAGES.append("en")
-except Exception:
-    LUNR_LANGUAGES = [
-        "ar",
-        "da",
-        "de",
-        "du",
-        "en",
-        "es",
-        "fi",
-        "fr",
-        "hi",
-        "hu",
-        "hy",
-        "it",
-        "ja",
-        "jp",
-        "kn",
-        "ko",
-        "nl",
-        "no",
-        "pt",
-        "ro",
-        "ru",
-        "sa",
-        "sv",
-        "ta",
-        "te",
-        "th",
-        "tr",
-        "vi",
-        "zh",
-    ]
-    log.warning("Unable to detect lunr languages from mkdocs distribution")
 MKDOCS_THEMES = ["mkdocs", "readthedocs"]
-
+SEARCH_KEYS = ["search", f"{THEME_NAME}/search"]
 
 class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
     def __init__(self, *args, **kwargs):
@@ -124,11 +69,11 @@ class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
             self.reconfigure_mkdocs_theme(config, self.current_language)
 
         # material theme specific reconfiguration (can be disabled)
-        if config.theme.name == "material" and self.config.reconfigure_material is True:
+        if config.theme.name == THEME_NAME and self.config.reconfigure_material is True:
             # check and warn about missing mkdocs-material version
             if MATERIAL_VERSION is None:
                 log.warning("mkdocs-material version could not be detected")
-            elif MATERIAL_VERSION <= "7.1":
+            elif Version(MATERIAL_VERSION) <= Version("7.1"): # fix version >= 10
                 log.warning(f"mkdocs-material version {MATERIAL_VERSION} is not supported")
             else:
                 config = self.reconfigure_material_theme(config, self.current_language)
@@ -142,7 +87,7 @@ class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
         # supported plugins reconfiguration
         for name, plugin in config.plugins.items():
             # search plugin (MkDocs & material > 9.0) reconfiguration
-            if name in ["search", "material/search"]:
+            if name in SEARCH_KEYS:
                 # search plugin reconfiguration can be disabled
                 if self.config.reconfigure_search:
                     config = self.reconfigure_search_plugin(config, name, plugin)
@@ -445,7 +390,7 @@ class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
         and deduplicate entries at the same time.
         """
         for name, plugin in config.plugins.items():
-            if name in ["search", "material/search"]:
+            if name in SEARCH_KEYS:
                 if hasattr(plugin, "search_index"):
                     for entries_attr in ["entries", "_entries"]:
                         if hasattr(plugin.search_index, entries_attr):
@@ -498,7 +443,7 @@ class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
         and deduplicate entries at the same time.
         """
         for name, plugin in config.plugins.items():
-            if name in ["search", "material/search"]:
+            if name in SEARCH_KEYS:
                 attribute_name = (
                     "_entries" if hasattr(plugin.search_index, "_entries") else "entries"
                 )

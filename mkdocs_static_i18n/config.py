@@ -1,7 +1,7 @@
 from re import compile
 
-from mkdocs.config import config_options
-from mkdocs.config.base import Config, ValidationError
+from mkdocs_static_i18n.compat import config_options
+from mkdocs_static_i18n.compat import Config, ValidationError
 
 RE_LOCALE = compile(r"(^[a-z]{2}(-[A-Za-z]{4})?(-[A-Z]{2})?$)|(^[a-z]{2}_[A-Z]{2}$)")
 
