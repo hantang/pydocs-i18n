@@ -11,13 +11,12 @@ from mkdocs_static_i18n.compat import MkDocsConfig
 from mkdocs_static_i18n.compat import get_plugin_logger
 from mkdocs_static_i18n.compat import Files
 from mkdocs_static_i18n.compat import Page
-from mkdocs_static_i18n.compat import BUILD_LOGGER_NAME, THEME_NAME
+from mkdocs_static_i18n.compat import BUILD_LOGGER_NAME
 
 from mkdocs_static_i18n import folder
 from mkdocs_static_i18n.reconfigure import ExtendedPlugin
 from mkdocs_static_i18n.utils import I18nLoggingFilter
 
-BLOG_KEY = f"{THEME_NAME}/blog"
 log = get_plugin_logger(__name__)
 
 
@@ -90,7 +89,8 @@ class I18n(ExtendedPlugin):
             nav = folder.reconfigure_navigation(self, nav)
 
         # reconfigure mkdocs-material blog navigation
-        if self.config.reconfigure_material and BLOG_KEY in config.plugins:
+        # the blog plugin is namespaced after the configured material theme
+        if self.config.reconfigure_material and f"{config.theme.name}/blog" in config.plugins:
             nav = self.reconfigure_material_blog(nav, config, files)
 
         homepage_suffix: str = "" if config.use_directory_urls else "index.html"

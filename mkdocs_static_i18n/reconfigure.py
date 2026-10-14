@@ -13,7 +13,7 @@ from mkdocs_static_i18n.compat import File, Files
 from mkdocs_static_i18n.compat import Navigation
 from mkdocs_static_i18n.compat import Page
 from mkdocs_static_i18n.compat import Theme
-from mkdocs_static_i18n.compat import LUNR_LANGUAGES, MATERIAL_VERSION, THEME_NAME
+from mkdocs_static_i18n.compat import LUNR_LANGUAGES, MATERIAL_THEMES, MATERIAL_VERSION
 
 from mkdocs_static_i18n import __file__ as installation_path
 from mkdocs_static_i18n import folder, is_relative_to, suffix
@@ -21,7 +21,26 @@ from mkdocs_static_i18n.config import I18nPluginConfig
 
 log = get_plugin_logger(__name__)
 MKDOCS_THEMES = ["mkdocs", "readthedocs"]
-SEARCH_KEYS = ["search", f"{THEME_NAME}/search"]
+SEARCH_KEYS = ["search", "material/search", "materialx/search"]
+
+
+def _search_index_of(plugin):
+    """
+    Return the search index object backing a search plugin, or None when the
+    plugin keeps no in-process search index.
+
+    - MkDocs' built-in (and properdocs') search plugin exposes ``search_index``.
+    - mkdocs-material/materialx (>= 9.0) delegate the work to a provider: the
+      ``lunr`` provider exposes ``provider.search_index`` while the ``pagefind``
+      provider has no in-process index (it indexes the built site on disk from
+      its own ``on_post_build``).
+    """
+    for holder in (plugin, getattr(plugin, "provider", None)):
+        search_index = getattr(holder, "search_index", None)
+        if search_index is not None:
+            return search_index
+    return None
+
 
 class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
     def __init__(self, *args, **kwargs):
@@ -69,7 +88,8 @@ class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
             self.reconfigure_mkdocs_theme(config, self.current_language)
 
         # material theme specific reconfiguration (can be disabled)
-        if config.theme.name == THEME_NAME and self.config.reconfigure_material is True:
+        # match any installed material theme (material, materialx, ...)
+        if config.theme.name in MATERIAL_THEMES and self.config.reconfigure_material is True:
             # check and warn about missing mkdocs-material version
             if MATERIAL_VERSION is None:
                 log.warning("mkdocs-material version could not be detected")
@@ -302,7 +322,11 @@ class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
     def reconfigure_search_plugin(
         self, config: MkDocsConfig, search_plugin_name: str, search_plugin
     ):
-        search_langs = search_plugin.config.lang or []
+        # MkDocs' built-in search plugin keeps `lang` at the top level while
+        # mkdocs-material/materialx (>= 9.7) nest it under the `lunr` sub-config.
+        plugin_config = search_plugin.config
+        lang_holder = plugin_config["lunr"] if "lunr" in plugin_config else plugin_config
+        search_langs = lang_holder.get("lang") or []
         for language in self.build_languages:
             if language in LUNR_LANGUAGES:
                 if language not in search_langs:
@@ -316,7 +340,7 @@ class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
                     f"lunr.js, not setting it in the 'plugins.search.lang' option"
                 )
         if search_langs:
-            search_plugin.config.lang = search_langs
+            lang_holder["lang"] = search_langs
         return config
 
     def reconfigure_with_pdf_plugin(self, config: MkDocsConfig):
@@ -391,14 +415,20 @@ class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
         """
         for name, plugin in config.plugins.items():
             if name in SEARCH_KEYS:
-                if hasattr(plugin, "search_index"):
-                    for entries_attr in ["entries", "_entries"]:
-                        if hasattr(plugin.search_index, entries_attr):
-                            entries = getattr(plugin.search_index, entries_attr)
-                            self.search_entries.extend(entries)
-                            break
-                    else:
-                        log.warning(f"Could not find '{name}' plugin search entries")
+                search_index = _search_index_of(plugin)
+                if search_index is None:
+                    log.debug(
+                        f"Search plugin '{name}' has no in-process search index "
+                        "to collect entries from"
+                    )
+                    continue
+                for entries_attr in ["entries", "_entries"]:
+                    if hasattr(search_index, entries_attr):
+                        entries = getattr(search_index, entries_attr)
+                        self.search_entries.extend(entries)
+                        break
+                else:
+                    log.warning(f"Could not find '{name}' plugin search entries")
 
     def reconfigure_search_duplicates(self, search_index_entries):
         """
@@ -444,16 +474,23 @@ class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
         """
         for name, plugin in config.plugins.items():
             if name in SEARCH_KEYS:
+                search_index = _search_index_of(plugin)
+                if search_index is None:
+                    log.debug(
+                        f"Search plugin '{name}' has no in-process search index "
+                        "to reconfigure"
+                    )
+                    continue
                 attribute_name = (
-                    "_entries" if hasattr(plugin.search_index, "_entries") else "entries"
+                    "_entries" if hasattr(search_index, "_entries") else "entries"
                 )
                 try:
-                    search_index_entries = getattr(plugin.search_index, attribute_name)
+                    search_index_entries = getattr(search_index, attribute_name)
                 except AttributeError:
                     log.warning(
                         f"Can't access the search index entries in {name} ({attribute_name})."
                     )
-                    return
+                    continue
                 # clear and repopulate the search index
                 search_index_entries.clear()
                 search_index_entries.extend(self.search_entries)

@@ -1,9 +1,43 @@
 import logging
+import sys
 from importlib.metadata import files as package_files
 from importlib.metadata import version
 from pathlib import PurePath
 
-try:
+
+def _running_engine():
+    """
+    Return the docs engine ("properdocs" or "mkdocs") driving this process.
+
+    Both engines can be installed side by side and each defines its own
+    ``BasePlugin``. A plugin class must inherit from the ``BasePlugin`` of the
+    engine that loads it, otherwise the loader rejects it with "must be a
+    subclass of <engine>.plugins.BasePlugin". The engine's package is always
+    imported (and its ``__main__`` module registered when invoked as a CLI)
+    before it loads plugins, so ``sys.modules`` tells us which one is running.
+    """
+    running = [e for e in ("properdocs", "mkdocs") if f"{e}.__main__" in sys.modules]
+    if len(running) == 1:
+        return running[0]
+
+    if "properdocs" in sys.modules and "mkdocs" not in sys.modules:
+        return "properdocs"
+    if "mkdocs" in sys.modules and "properdocs" not in sys.modules:
+        return "mkdocs"
+
+    # Neither engine imported yet (or both are): honor properdocs when it is
+    # installed, otherwise fall back to mkdocs.
+    try:
+        import properdocs  # noqa: F401
+
+        return "properdocs"
+    except ImportError:
+        return "mkdocs"
+
+
+ENGINE = _running_engine()
+
+if ENGINE == "properdocs":
     from properdocs import localization, plugins, utils
     from properdocs.commands.build import build
     from properdocs.config import config_options
@@ -15,9 +49,7 @@ try:
     from properdocs.structure.pages import Page
     from properdocs.theme import Theme
 
-    ENGINE = "properdocs"
-
-except ImportError:
+else:
     from mkdocs import localization, plugins, utils
     from mkdocs.commands.build import build
     from mkdocs.config import config_options
@@ -28,8 +60,6 @@ except ImportError:
     from mkdocs.structure.nav import Navigation
     from mkdocs.structure.pages import Page
     from mkdocs.theme import Theme
-
-    ENGINE = "mkdocs"
 
 MATERIAL_PACKAGES = {
     "mkdocs-material": "material",
@@ -72,14 +102,22 @@ DEFAULT_LANGS = [
 MATERIAL_VERSION = ""
 THEME_NAME = ""
 
+# Names of every installed material theme, e.g. ["material", "materialx"]. Both
+# mkdocs-material and mkdocs-materialx can be installed side by side and each
+# provides its own material theme, so theme reconfiguration must match the theme
+# name actually used by the running config, not only the first installed package.
+MATERIAL_THEMES = []
+
 for pkg_name, theme_name in MATERIAL_PACKAGES.items():
     try:
-        MATERIAL_VERSION = version(pkg_name)
-        THEME_NAME = theme_name
-        break
+        material_version = version(pkg_name)
     except Exception:
         # print(f"No material theme {e}")
-        pass
+        continue
+    MATERIAL_THEMES.append(theme_name)
+    if not THEME_NAME:
+        MATERIAL_VERSION = material_version
+        THEME_NAME = theme_name
 
 LUNR_LANGUAGES = []
 try:
@@ -122,4 +160,5 @@ __all__ = [
     "BUILD_LOGGER_NAME",
     "LUNR_LANGUAGES",
     "THEME_NAME",
+    "MATERIAL_THEMES",
 ]

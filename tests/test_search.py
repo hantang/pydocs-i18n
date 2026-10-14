@@ -1,16 +1,45 @@
 from mkdocs.commands.build import build
 from mkdocs.config.base import load_config
 
+from mkdocs_static_i18n.reconfigure import _search_index_of
+
+
+def test_search_index_of():
+    class Index:
+        pass
+
+    class Direct:
+        """MkDocs/properdocs built-in search plugin layout."""
+
+        def __init__(self, search_index):
+            self.search_index = search_index
+
+    class Provider:
+        """mkdocs-material/materialx >= 9.0 provider layout."""
+
+        def __init__(self, search_index):
+            self.provider = type("Provider", (), {"search_index": search_index})()
+
+    assert isinstance(_search_index_of(Direct(Index())), Index)
+    assert isinstance(_search_index_of(Provider(Index())), Index)
+    # mkdocs-material's default "pagefind" provider keeps no in-process index
+    assert _search_index_of(Provider(None)) is None
+    assert _search_index_of(type("NoIndex", (), {})()) is None
+
 
 def test_search_entries():
     for theme in ["mkdocs", "material"]:
+        # mkdocs-material/materialx (>= 9.0) delegate search to a provider and
+        # default to "pagefind", which keeps no in-process index. Pin "lunr" so
+        # the stacked i18n search index can be asserted.
+        search_config = {"provider": "lunr"} if theme == "material" else {}
         mkdocs_config = load_config(
             "tests/mkdocs.yml",
             theme={"name": theme},
             use_directory_urls=True,
             docs_dir="docs_suffix_structure_two_languages/",
             plugins={
-                "search": {},
+                "search": search_config,
                 "i18n": {
                     "languages": [
                         {
@@ -27,11 +56,11 @@ def test_search_entries():
             mkdocs_config["plugins"]["material/search"].on_startup(command=None, dirty=False)
         build(mkdocs_config)
         if theme == "mkdocs":
-            search_plugin = mkdocs_config["plugins"]["search"]
-            assert len(search_plugin.search_index._entries) == 36
+            search_index = _search_index_of(mkdocs_config["plugins"]["search"])
+            assert len(search_index._entries) == 36
         else:
-            search_plugin = mkdocs_config["plugins"]["material/search"]
-            assert len(search_plugin.search_index.entries) == 26
+            search_index = _search_index_of(mkdocs_config["plugins"]["material/search"])
+            assert len(search_index.entries) == 26
 
 
 def test_search_entries_no_directory_urls():
