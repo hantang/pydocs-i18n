@@ -5,15 +5,17 @@ from pathlib import PurePath
 from typing import Optional
 
 from jinja2.ext import loopcontrols
-from mkdocs_static_i18n.compat import plugins
-from mkdocs_static_i18n.compat import build
-from mkdocs_static_i18n.compat import MkDocsConfig
-from mkdocs_static_i18n.compat import get_plugin_logger
-from mkdocs_static_i18n.compat import Files
-from mkdocs_static_i18n.compat import Page
-from mkdocs_static_i18n.compat import BUILD_LOGGER_NAME
 
 from mkdocs_static_i18n import folder
+from mkdocs_static_i18n.compat import (
+    BUILD_LOGGER_NAME,
+    Files,
+    MkDocsConfig,
+    Page,
+    build,
+    get_plugin_logger,
+    plugins,
+)
 from mkdocs_static_i18n.reconfigure import ExtendedPlugin
 from mkdocs_static_i18n.utils import I18nLoggingFilter
 

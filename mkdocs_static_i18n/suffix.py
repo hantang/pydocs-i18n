@@ -3,10 +3,7 @@ from pathlib import Path, PurePath
 from typing import Optional
 from urllib.parse import quote as urlquote
 
-from mkdocs_static_i18n.compat import MkDocsConfig
-from mkdocs_static_i18n.compat import get_plugin_logger
-from mkdocs_static_i18n.compat import File, Files
-
+from mkdocs_static_i18n.compat import File, Files, MkDocsConfig, get_plugin_logger
 from mkdocs_static_i18n.config import RE_LOCALE
 
 log = get_plugin_logger(__name__)

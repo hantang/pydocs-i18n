@@ -3,20 +3,26 @@ from copy import deepcopy
 from pathlib import Path, PurePath
 from typing import Union
 from urllib.parse import urlsplit
-from packaging.version import Version
 
-from mkdocs_static_i18n.compat import localization
-from mkdocs_static_i18n.compat import LegacyConfig
-from mkdocs_static_i18n.compat import MkDocsConfig
-from mkdocs_static_i18n.compat import BasePlugin, get_plugin_logger
-from mkdocs_static_i18n.compat import File, Files
-from mkdocs_static_i18n.compat import Navigation
-from mkdocs_static_i18n.compat import Page
-from mkdocs_static_i18n.compat import Theme
-from mkdocs_static_i18n.compat import LUNR_LANGUAGES, MATERIAL_THEMES, MATERIAL_VERSION
+from packaging.version import Version
 
 from mkdocs_static_i18n import __file__ as installation_path
 from mkdocs_static_i18n import folder, is_relative_to, suffix
+from mkdocs_static_i18n.compat import (
+    LUNR_LANGUAGES,
+    MATERIAL_THEMES,
+    MATERIAL_VERSION,
+    BasePlugin,
+    File,
+    Files,
+    LegacyConfig,
+    MkDocsConfig,
+    Navigation,
+    Page,
+    Theme,
+    get_plugin_logger,
+    localization,
+)
 from mkdocs_static_i18n.config import I18nPluginConfig
 
 log = get_plugin_logger(__name__)
@@ -93,7 +99,7 @@ class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
             # check and warn about missing mkdocs-material version
             if MATERIAL_VERSION is None:
                 log.warning("mkdocs-material version could not be detected")
-            elif Version(MATERIAL_VERSION) <= Version("7.1"): # fix version >= 10
+            elif Version(MATERIAL_VERSION) <= Version("7.1"):  # fix version >= 10
                 log.warning(f"mkdocs-material version {MATERIAL_VERSION} is not supported")
             else:
                 config = self.reconfigure_material_theme(config, self.current_language)
@@ -417,10 +423,7 @@ class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
             if name in SEARCH_KEYS:
                 search_index = _search_index_of(plugin)
                 if search_index is None:
-                    log.debug(
-                        f"Search plugin '{name}' has no in-process search index "
-                        "to collect entries from"
-                    )
+                    log.debug(f"'{name}' has no in-process search index to collect entries")
                     continue
                 for entries_attr in ["entries", "_entries"]:
                     if hasattr(search_index, entries_attr):
@@ -476,14 +479,9 @@ class ExtendedPlugin(BasePlugin[I18nPluginConfig]):
             if name in SEARCH_KEYS:
                 search_index = _search_index_of(plugin)
                 if search_index is None:
-                    log.debug(
-                        f"Search plugin '{name}' has no in-process search index "
-                        "to reconfigure"
-                    )
+                    log.debug(f"'{name}' has no in-process search index to reconfigure")
                     continue
-                attribute_name = (
-                    "_entries" if hasattr(search_index, "_entries") else "entries"
-                )
+                attribute_name = "_entries" if hasattr(search_index, "_entries") else "entries"
                 try:
                     search_index_entries = getattr(search_index, attribute_name)
                 except AttributeError:
