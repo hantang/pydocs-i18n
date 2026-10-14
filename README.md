@@ -1,11 +1,11 @@
 # MkDocs<sup>※</sup> static i18n plugin
 
-*The plugin that helps you support multiple language versions of your site / documentation.*
-
 Fork of [ultrabug/mkdocs-static-i18n](https://github.com/ultrabug/mkdocs-static-i18n),
 extended to **properdocs** with the **materialx** theme.
 
 ## Compatibility
+
+`Python >= 3.10`
 
 | Engine | Theme | Extra |
 | --- | --- | --- |
@@ -62,9 +62,9 @@ hatch run doc2:serve     # properdocs + mkdocs-materialx
 Without `hatch`:
 
 ```shell
-python -m venv .venv            && .venv/bin/pip install -e ".[material]"
-python -m venv .venv-properdocs && .venv-properdocs/bin/pip install -e ".[materialx]"
-
+python -m venv .venv && .venv/bin/pip install -e ".[material]"
 .venv/bin/mkdocs serve
+
+python -m venv .venv-properdocs && .venv-properdocs/bin/pip install -e ".[materialx]"
 .venv-properdocs/bin/properdocs serve
 ```
