@@ -67,8 +67,6 @@ all = [
 dependencies = [
     "pytest",
     "mkdocs-material<9.7.2",
-    "mkdocs-materialx>=10.0.0",
-    "properdocs>=1.6.5"
 ]
 
 [tool.hatch.envs.test.scripts]
@@ -83,14 +81,21 @@ type = ["default"]
 [tool.hatch.envs.doc]
 dependencies = [
     "mkdocs-material<9.7.2",
-    "mkdocs-materialx>=10.0.0"
 ]
 
 [tool.hatch.envs.doc.scripts]
 serve = [
     "mkdocs serve",
 ]
-serve2 = [
+
+[tool.hatch.envs.doc2]
+dependencies = [
+    "mkdocs-materialx>=10.0.0",
+    "properdocs>=1.6.5",
+]
+
+[tool.hatch.envs.doc2.scripts]
+serve = [
     "properdocs serve",
 ]
 

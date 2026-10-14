@@ -1,11 +1,11 @@
 site_name: MkDocs static i18n plugin documentation
-site_url: https://ultrabug.github.io/mkdocs-static-i18n
-repo_url: https://github.com/ultrabug/mkdocs-static-i18n
+site_url: https://hantang.github.io/mkdocs-static-i18n
+repo_url: https://github.com/hantang/pydocs-i18n
 
 docs_dir: docs/
 exclude_docs: overrides/
 
-copyright: Copyright © 2021-2023 Alexys Jacob / 2026
+copyright: Copyright © 2021-2023 Alexys Jacob / 2026 Hantang
 
 theme:
   name: materialx
@@ -26,8 +26,8 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/ultrabug/mkdocs-static-i18n
-      name: mkdocs-static-i18n on Github
+      link: https://github.com/hantang/pydocs-i18n
+      name: pydocs-i18n(mkdocs-static-i18n) on Github
 
 markdown_extensions:
   - admonition

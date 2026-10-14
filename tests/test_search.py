@@ -4,6 +4,21 @@ from mkdocs.config.base import load_config
 from mkdocs_static_i18n.reconfigure import _search_index_of
 
 
+def _material_search_config():
+    """
+    mkdocs-materialx (>= 10) delegates search to a provider and needs
+    `provider: lunr` for an in-process index; mkdocs-material (9.x) has no such
+    option. Build whatever the installed material package understands.
+    """
+    try:
+        from material.plugins.search.config import SearchConfig
+    except ImportError:
+        return {}
+    if any(name == "provider" for name, _ in SearchConfig._schema):
+        return {"provider": "lunr"}
+    return {}
+
+
 def test_search_index_of():
     class Index:
         pass
@@ -29,10 +44,7 @@ def test_search_index_of():
 
 def test_search_entries():
     for theme in ["mkdocs", "material"]:
-        # mkdocs-material/materialx (>= 9.0) delegate search to a provider and
-        # default to "pagefind", which keeps no in-process index. Pin "lunr" so
-        # the stacked i18n search index can be asserted.
-        search_config = {"provider": "lunr"} if theme == "material" else {}
+        search_config = _material_search_config() if theme == "material" else {}
         mkdocs_config = load_config(
             "tests/mkdocs.yml",
             theme={"name": theme},
